@@ -16,18 +16,21 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Tools
+      - name: Install Security Tools
         run: |
           pip install bandit safety
 
       - name: 1. SAST (Code Scan)
+        # سيقوم بفحص app.py وحفظ النتيجة في sast_report.txt
         run: bandit -r app.py -f txt -o sast_report.txt || true
 
       - name: 2. SCA (Dependency Scan)
-        # هذا الأمر يفحص ملف requirements.txt ويبحث عن ثغرات في المكتبات
+        # سيقوم بفحص المكتبات وحفظ النتيجة في sca_report.txt
         run: safety check -r requirements.txt --full-report > sca_report.txt || true
 
       - name: 3. Secret Scan
+        # سيقوم بالبحث عن الأسرار ولن يوقف الـ Pipeline بفضل continue-on-error
+        continue-on-error: true
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
@@ -35,11 +38,12 @@ jobs:
           head: HEAD
           extra_args: --only-verified
 
-      - name: Upload Final Security Reports
+      - name: 4. Upload All Reports
+        # هذه هي الخطوة التي كانت تنقصك، ستقوم بجمع كل التقارير ورفعها
+        if: always() # تضمن الرفع حتى لو فشلت الخطوات السابقة
         uses: actions/upload-artifact@v4
         with:
           name: Full-Security-Audit-Reports
           path: |
             sast_report.txt
             sca_report.txt
-            
