@@ -1,6 +1,6 @@
 name: Secure DevSecOps Pipeline
 
-on: [push] # يشتغل تلقائياً عند كل رفع كود
+on: [push]
 
 jobs:
   security_scan:
@@ -8,6 +8,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # ضروري لفحص تاريخ الكود بحثاً عن الأسرار
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -17,6 +19,14 @@ jobs:
       - name: Install Security Tools
         run: pip install bandit
 
-      - name: Run Bandit Security Scan
-        # هنا راح نفحص ملف app.py اللي رفعناه ونطلع تقرير بالثغرات
+      - name: Run Static Analysis (SAST)
         run: bandit -r app.py
+
+      - name: Run Secret Scan
+        # سنستخدم أداة TruffleHog الرسمية كخطوة جاهزة
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
