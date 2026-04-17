@@ -1,4 +1,4 @@
-name: Secure DevSecOps Pipeline
+name: Secure DevSecOps Pipeline - Final Version
 
 on: [push]
 
@@ -8,23 +8,38 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Install Security Tools
-        run: pip install bandit
+      - name: Install Tools
+        run: |
+          pip install bandit safety
 
-      - name: Run SAST Scan & Generate Report
-        # هنا نخبر Bandit أن يحفظ النتائج في ملف نصي اسمه report.txt
-        # استخدمنا '|| true' لكي لا يتوقف النظام عند اكتشاف ثغرة، بل يكمل لتوليد التقرير
-        run: bandit -r app.py -f txt -o security_report.txt || true
+      - name: 1. SAST (Code Scan)
+        run: bandit -r app.py -f txt -o sast_report.txt || true
 
-      - name: Upload Security Report
-        # هذه الخطوة ستقوم برفع الملف لكي تستطيع تحميله من المتصفح
+      - name: 2. SCA (Dependency Scan)
+        # هذا الأمر يفحص ملف requirements.txt ويبحث عن ثغرات في المكتبات
+        run: safety check -r requirements.txt --full-report > sca_report.txt || true
+
+      - name: 3. Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+      - name: Upload Final Security Reports
         uses: actions/upload-artifact@v4
         with:
-          name: Security-Analysis-Report
-          path: security_report.txt
+          name: Full-Security-Audit-Reports
+          path: |
+            sast_report.txt
+            sca_report.txt
+            
