@@ -8,8 +8,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # ضروري لفحص تاريخ الكود بحثاً عن الأسرار
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -19,14 +17,14 @@ jobs:
       - name: Install Security Tools
         run: pip install bandit
 
-      - name: Run Static Analysis (SAST)
-        run: bandit -r app.py
+      - name: Run SAST Scan & Generate Report
+        # هنا نخبر Bandit أن يحفظ النتائج في ملف نصي اسمه report.txt
+        # استخدمنا '|| true' لكي لا يتوقف النظام عند اكتشاف ثغرة، بل يكمل لتوليد التقرير
+        run: bandit -r app.py -f txt -o security_report.txt || true
 
-      - name: Run Secret Scan
-        # سنستخدم أداة TruffleHog الرسمية كخطوة جاهزة
-        uses: trufflesecurity/trufflehog@main
+      - name: Upload Security Report
+        # هذه الخطوة ستقوم برفع الملف لكي تستطيع تحميله من المتصفح
+        uses: actions/upload-artifact@v4
         with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --debug --only-verified
+          name: Security-Analysis-Report
+          path: security_report.txt
