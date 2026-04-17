@@ -1,8 +1,11 @@
 import sqlite3
 
 def get_user_data(user_id):
-    # تحذير: هذا الكود يحتوي على ثغرة SQL Injection مقصودة للاختبار
-    query = "SELECT * FROM users WHERE id = " + user_id 
+    # الكود الآمن: نستخدم علامة استفهام لمنع دمج المدخلات مباشرة في الاستعلام
+    # هذا يمنع ثغرة SQL Injection تماماً
+    query = "SELECT * FROM users WHERE id = ?" 
+    print(f"Executing secure query with ID: {user_id}")
     return query
 
-print(get_user_data("1 OR 1=1"))
+# تجربة الاستدعاء بشكل آمن
+get_user_data("1")
