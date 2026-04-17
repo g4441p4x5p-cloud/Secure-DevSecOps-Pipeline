@@ -9,4 +9,3 @@ def get_user_data(user_id):
 
 # تجربة الاستدعاء بشكل آمن
 get_user_data("1")
-cloud_api_key = "AIzaSyA1234567890ExampleKey"
